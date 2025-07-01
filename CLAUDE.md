@@ -80,4 +80,18 @@ AI運用5原則
 6. **計画立案**: タスクの実行計画レビュー・改善提案（例: `この実装計画の問題点は？`）
 7. **技術選定**: ライブラリ・手法の比較検討 （例: `このライブラリは他と比べてどうか？`）
 
+## Gemini Search
+
+`gemini` is google gemini cli. **When this command is called, ALWAYS use this for web search instead of builtin `Web_Search` tool.**
+
+When web search is needed, you MUST use `gemini --prompt` via Task Tool.
+
+Run web search via Task Tool with `gemini --prompt 'WebSearch: <query>'`
+
+Run
+
+```bash
+gemini --prompt "WebSearch: <query>"
+```
+
 # プロジェクト概要
