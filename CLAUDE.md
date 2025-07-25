@@ -131,6 +131,11 @@ gemini --prompt "WebSearch: <query>"
 
 <!-- ClaudeCodeにKiroの要件定義を追加したい場合 -->
 <!-- 以下のCLAUDE.mdとcommandsフォルダをコピペする -->
+<!-- # オプション: ステアリング文書を作成
+/steering-init
+
+# 最初の機能仕様を作成
+/spec-init "あなたのプロジェクトややりたいことの詳細な説明" -->
 # Claude Code Spec-Driven Development
 
 This project implements Kiro-style Spec-Driven Development for Claude Code using hooks and slash commands.
