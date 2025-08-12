@@ -219,276 +219,915 @@ Managed by `/kiro:steering` command. Updates here reflect command changes.
 
 
 <!-- CLAUDE.mdのプロジェクト概要テンプレート -->
-# Gotoshisha プロジェクト - Claude Code ガイド
+# Flutter開発規約・ベストプラクティス
 
-## プロジェクト概要
-Gotoshishaは、位置情報共有機能を持つ SNS アプリケーションです。React Native + Expo でクロスプラットフォーム対応のフロントエンド、Cloudflare Workers + Hono のサーバーレスバックエンドで構築されています。
+**他プロジェクト適用時の注意**: このドキュメントは汎用的なFlutter開発規約ですが、一部にプロジェクト固有の設定（`[PROJECT_SPECIFIC]`でマーク）が含まれています。新しいプロジェクトで使用する際は、該当部分を適宜置き換えてください。
 
-アプリ名: Gotoshisha (expo-react-native-maps-demo)
-プロジェクトタイプ: モノレポ構成のフルスタックアプリケーション
-主要機能: 位置情報共有、投稿・コメント・いいね機能、Auth0 認証
+## 目次
 
-## 技術スタック
+1. [基本方針・設定](#基本方針設定)
+2. [プロジェクト構成](#プロジェクト構成) 
+3. [コーディング規約](#コーディング規約)
+4. [スタイル・定数管理](#スタイル定数管理)
+5. [プロジェクト固有設定](#プロジェクト固有設定)
 
-### フロントエンド
-フレームワーク: React Native 0.79.2 + Expo 53.0.9
-言語: TypeScript 5.1.3
-ルーティング: Expo Router 5.0.7
-マップ: React Native Maps 1.20.1
-認証: Auth0 (react-native-auth0 4.6.0 + expo-auth-session 6.1.5)
-プラットフォーム: iOS / Android
-ディープリンクスキーム: gotoshisha://
+---
 
-### バックエンド
-フレームワーク: Hono 4.6.3
-ランタイム: Cloudflare Workers
-データベース: Cloudflare D1 (SQLite)
-ORM: Prisma 5.22.0 with @prisma/adapter-d1
-バリデーション: Zod 3.23.8
-デプロイ: Wrangler 3.86.1
+## 基本方針・設定
 
-### 開発・テスト環境
-パッケージマネージャー: pnpm
-テストフレームワーク: Vitest 3.1.4
-リンター: ESLint 9.15.0 + TypeScript ESLint
-CI/CD: GitHub Actions
+## プロジェクト構成
 
-## プロジェクト構造
-gotoshisha/
-├── app/                          # フロントエンド（React Native + Expo）
-│   ├── components/               # 再利用可能なコンポーネント
-│   │   └── LoginButton.tsx      # Auth0ログインボタン
-│   ├── contexts/                 # React Context
-│   │   ├── AuthContext.tsx      # ネイティブ認証コンテキスト
-│   │   └── AuthContext.web.tsx  # Web認証コンテキスト
-│   ├── routes/                   # 画面コンポーネント
-│   │   ├── home.tsx             # ホーム画面
-│   │   ├── login.tsx            # ログイン画面
-│   │   └── map.tsx              # マップ画面
-│   ├── config/                   # 設定ファイル
-│   │   └── auth0.ts             # Auth0設定
-│   └── utils/                    # ユーティリティ
-│       └── auth/                 # 認証関連ユーティリティ
-│           ├── storage.ts        # クロスプラットフォームストレージ
-│           ├── auth0Api.ts       # Auth0 API
-│           ├── useAuth0.ts       # Auth0カスタムフック
-│           └── *.test.ts         # テストファイル
-├── backend/                      # バックエンド（Cloudflare Workers）
-│   ├── src/                      # バックエンドソースコード
-│   │   ├── index.ts             # メインエントリーポイント
-│   │   ├── lib/                 # ライブラリ
-│   │   └── types/               # 型定義
-│   ├── prisma/                   # データベース
-│   │   ├── schema.prisma        # Prismaスキーマ
-│   │   └── dev.db               # 開発用SQLiteファイル
-│   ├── migrations/               # マイグレーションファイル
-│   ├── scripts/                  # ユーティリティスクリプト
-│   │   └── seed.ts              # データベースシード
-│   └── wrangler.toml            # Cloudflare Workers設定
-├── assets/                       # 静的アセット
-├── docs/                         # プロジェクトドキュメント
-└── src/                          # 共通ユーティリティ
+### フォルダー構成（汎用）
+```
+lib/
+├── src/
+│   ├── config/
+│   │   ├── enum/                    # Enum定義
+│   │   ├── firebase/                # Firebase設定
+│   │   ├── routing/                 # ルーティング設定
+│   │   └── utils/
+│   │       ├── style/               # スタイル定義
+│   │       │   ├── color_style.dart     # 色定義
+│   │       │   ├── custom_font_size.dart # フォントサイズ定義
+│   │       │   ├── height_margin.dart   # 縦余白定義
+│   │       │   └── width_margin.dart    # 横余白定義
+│   │       └── key/                 # 定数管理
+│   │           ├── firebase_key.dart # Firebase用キー
+│   │           ├── number_key.dart   # 数値定数
+│   │           └── string_key.dart   # 文字列定数
+│   ├── functions/                   # ユーティリティ関数
+│   │   ├── date_formatter.dart      # 日付フォーマット関数
+│   │   ├── string_helper.dart       # 文字列処理関数
+│   │   ├── number_formatter.dart    # 数値フォーマット関数
+│   │   └── validation_helper.dart   # バリデーション関数
+│   ├── common_widgets/              # プロジェクト全体共有Widget
+│   └── feature/
+│       └── [機能名]/
+│           ├── controller/          # コントローラー層
+│           ├── data_model/          # データモデル（Freezed）
+│           ├── repo/                # リポジトリ層
+│           └── view/                # View層（画面）
+│               ├── [screen].dart
+│               ├── part/            # 単一画面専用parts
+│               └── component/       # feature内共有components
+```
 
-## データベース設計
+### Widget切り出し規約
 
-### モデル構成
-User: ユーザー情報（email, name, avatar）
-Post: 投稿（title, content, 位置情報、画像）
-Like: いいね機能
-Comment: コメント機能
-Tag/PostTag: タグシステム
+#### 1. 切り出し分類基準
 
-### 環境別 DB 設定
-開発: gotoshisha-db
-ステージング: gotoshisha-db-staging
-本番: gotoshisha-db-prod
+##### A. partフォルダ（part文で切り出し）
+- **使用範囲**: 1つのscreenファイル内でのみ使用
+- **切り出し条件**: 
+  - メソッド化されたWidget構築処理（`_buildXxx` メソッド）
+  - 50行以上の複雑なWidget構成
+  - 再利用性は必要ないが、可読性向上のためのモジュール化
 
-## 開発ワークフロー
+**ファイル分割規則:**
+- **1ファイル最大150行**: partファイルが150行を超える場合はさらに細分化
+- **分割配置**: 同じpartフォルダ内に配置（サブフォルダー作成不要）
+- **分割単位**: 機能やUI部品ごとに分割
 
-### セットアップ
-# 1. 依存関係インストール
-pnpm install
+**実装例:**
+```dart
+// main_screen.dart
+part 'part/main_data_table.dart';
 
-# 2. バックエンドセットアップ
-cd backend
-pnpm install
-pnpm db:generate
-
-# 3. 環境変数設定（Auth0設定が必要）
-cp .env.example .env
-
-### 開発サーバー起動
-# フロントエンド（ルートディレクトリから）
-pnpm start              # Expo開発サーバー
-pnpm ios               # iOS実行
-pnpm android           # Android実行
-pnpm start:clear       # キャッシュクリア付き起動
-
-# バックエンド（backendディレクトリから）
-cd backend
-pnpm dev               # Wrangler開発サーバー（ローカル）
-
-### テスト実行
-# フロントエンド
-pnpm test              # ウォッチモード
-pnpm test:run          # 単発実行
-pnpm test:ui           # UI付きテスト
-
-# バックエンド
-cd backend
-pnpm test:run          # テスト実行
-
-### コード品質チェック
-# リンティング
-pnpm lint              # ESLint実行
-pnpm lint:fix          # 自動修正
-
-# 型チェック
-pnpm type-check        # TypeScript型チェック
-
-### データベース操作
-cd backend
-
-# Prisma操作
-pnpm db:generate       # クライアント生成
-pnpm db:push           # スキーマ同期（開発用）
-pnpm db:migrate        # マイグレーション（本番用）
-pnpm db:studio         # Prisma Studio（GUI）
-pnpm db:seed           # シードデータ投入
-
-## 認証システム
-
-### Auth0 設定
-プロバイダー: Auth0
-プラットフォーム別対応:
-ネイティブ: react-native-auth0
-Web: expo-auth-session + expo-crypto
-セッション管理: expo-secure-store（ネイティブ）/ localStorage（Web）
-
-## テストガイドライン
-
-### フロントエンド
-ファイル配置: app/utils/auth/*.test.ts
-テスト対象: ユーティリティ関数、カスタムフック、純粋関数
-環境: jsdom + vitest
-日本語: テスト説明とコメントは日本語で記述
-
-### バックエンド
-ファイル配置: backend/src/**/*.test.ts
-テスト対象: API エンドポイント、データベース操作、ビジネスロジック
-環境: Node.js + vitest
-
-### テスト実行環境
-グローバル設定: vitest.config.ts（両方）
-セットアップ: vitest.setup.ts（フロントエンド）
-モック: React Native、Expo、Cloudflare Workers
-
-## デプロイメント
-
-### フロントエンド
-# Web
-pnpm build
-
-# ネイティブ（要Expo Application Services）
-eas build --platform ios
-eas build --platform android
-
-### バックエンド
-cd backend
-
-# 本番デプロイ
-pnpm deploy --env production
-
-# ステージングデプロイ
-pnpm deploy --env staging
-
-## 重要な設定ファイル
-
-### フロントエンド
-app.json: Expo アプリ設定
-babel.config.js: Babel 設定（静的クラスブロック対応）
-metro.config.js: Metro bundler 設定（テストファイル除外）
-tsconfig.json: TypeScript 設定
-
-### バックエンド
-wrangler.toml: Cloudflare Workers 設定
-prisma/schema.prisma: データベーススキーマ
-vitest.config.ts: テスト設定
-
-## トラブルシューティング
-
-### よくある問題
-認証エラー: Auth0 のコールバック URL 設定を確認
-バンドルエラー: Metro 設定でテストファイルが除外されているか確認
-型エラー: Prisma クライアント生成（pnpm db:generate）を実行
-D1 エラー: wrangler.toml の database_id 設定を確認
-
-### デバッグコマンド
-# キャッシュクリア
-pnpm start:clear
-
-# 依存関係再インストール
-rm -rf node_modules pnpm-lock.yaml
-pnpm install
-
-# Expo診断
-npx expo doctor
-
-## CI/CD
-GitHub Actions で以下を自動実行：
-
-TypeScript 型チェック
-ESLint リンティング
-Vitest ユニットテスト
-ビルド検証
-
-実行タイミング：
-main/developブランチへのプッシュ
-main/developブランチへのプルリクエスト
-
-## コントリビューション
-機能ブランチを作成
-コード品質チェックを通す（lint + type-check + test）
-日本語でのコメント・テスト記述
-プルリクエスト作成
-
-## コード生成規約
-言語: TypeScript
-
-### コメント
-各ファイルの冒頭には日本語のコメントで仕様を記述する。
-出力例
-
-/**
- * 2点間のユークリッド距離を計算する
- **/
-type Point = { x: number; y: number };
-export function distance(a: Point, b: Point): number {
-  return Math.sqrt((a.x - b.x) ** 2 + (a.y - b.y) ** 2);
+class MainScreen extends HookConsumerWidget {
+  Widget build(BuildContext context, WidgetRef ref) {
+    return _buildMainDataTable(context, ref, data);
+  }
 }
 
-### テスト
-各機能に対しては必ずユニットテストを実装(テストは Vitest を使用。describe/it 構文を使用。describe は日本語で記述)
-コードを追加で修正したとき、pnpm run test がパスすることを常に確認する。
-function add(a: number, b: number) {
-  return a + b;
-}
-test("1+2=3", () => {
-  expect(add(1, 2)).toBe(3);
-});
+// part/main_data_table.dart  
+part of '../main_screen.dart';
 
-vitest で実装と同じファイルにユニットテストを書く。
-出力例
-export function distance(a: Point, b: Point): number {...}
-if (import.meta.vitest) {
-  const {test, expect} = import.meta.vitest;
-  test("ユークリッド距離を計算する", () => {
-    const result = distance({x: 0, y: 0}, {x: 3, y: 4});
-    expect(distance(result)).toBe(5)
-  });
+Widget _buildMainDataTable(
+  BuildContext context,
+  WidgetRef ref, 
+  List<DataModel> data,
+) {
+  return SingleChildScrollView(
+    child: DataTable(/* ... */),
+  );
+}
+```
+
+##### B. componentフォルダ（通常のclass切り出し）
+- **使用範囲**: 同一feature内の複数screen間で共有
+- **切り出し条件**: 2つ以上のscreenファイルで使用される独立したWidget
+
+##### C. common_widgetsフォルダ（プロジェクト全体共有）
+- **使用範囲**: 複数のfeature間で共有される
+- **配置場所**: `lib/src/common_widgets/`
+- **切り出し条件**: 3つ以上のfeatureで使用される汎用的なUI部品
+
+#### 2. 切り出し命名規則
+
+##### partファイル命名:
+- `[feature_name]_[widget_purpose].dart`
+- 例: `user_data_table.dart`
+
+##### componentファイル命名:
+- `[domain]_[widget_name].dart`  
+- 例: `user_status_chip.dart`
+
+##### common_widgetファイル命名:
+- `custom_[widget_name].dart`
+- 例: `custom_data_table.dart`
+
+---
+
+## コーディング規約
+
+### Widget使用統一ルール
+
+#### 1. 全Widgetの基底クラス
+- **画面**: `HookConsumerWidget` 
+- **ダイアログ**: `HookConsumerWidget`
+- **コンポーネント**: `HookConsumerWidget`
+- **part内のWidget関数**: `HookConsumerWidget` のメソッド内で呼び出し
+
+**理由**: 統一性の確保、Hooksの一貫した利用、状態管理の統一
+
+#### 2. error/loading処理の統一化（必須）
+```dart
+// ❌ 禁止（直接Widget作成）
+loading: () => const Center(child: CircularProgressIndicator()),
+error: (error, stack) => Center(child: Text('エラー: $error')),
+
+// ✅ 必須（common_widgetの使用）
+loading: () => const LoadingWidget(),
+error: (error, stack) => ErrorTextWidget(errorText: '${StringKey.errorMessage}$error'),
+```
+
+#### 3. common_widgets使用規則
+
+##### A. LoadingWidget（ローディング表示）
+```dart
+// 基本使用
+const LoadingWidget()
+
+// 色指定
+const LoadingWidget(color: ColorStyle.blue)
+```
+
+##### B. ErrorTextWidget（エラー表示）
+```dart
+// 基本使用
+ErrorTextWidget(errorText: errorMessage)
+
+// 色指定
+ErrorTextWidget(
+  errorText: errorMessage,
+  textColor: ColorStyle.red,
+)
+```
+
+#### 4. 画面構成例
+```dart
+class FeatureScreen extends HookConsumerWidget {
+  const FeatureScreen({super.key});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final asyncValue = ref.watch(watchFeatureControllerProvider);
+    
+    return asyncValue.when(
+      data: (data) => _buildContent(context, ref, data),
+      loading: () => const LoadingWidget(),
+      error: (error, stack) => ErrorTextWidget(
+        errorText: '${StringKey.errorMessage}$error',
+      ),
+    );
+  }
+}
+```
+
+### Repository パターン
+
+#### 1. 基本的なCollectionReference型
+```dart
+@riverpod
+class FeatureRepo extends _$FeatureRepo {
+  @override
+  CollectionReference<Model> build() {
+    return ref
+        .read(firebaseFirestoreProvider)
+        .collection(FirebaseFeatureKey.featureCollection)
+        .withConverter(
+          fromFirestore: (snapshot, _) => Model.fromJson(snapshot.data()!),
+          toFirestore: (model, _) => model.toJson(),
+        );
+  }
+  
+  // 単一ドキュメント監視
+  Stream<Model?> watchModel({required String id}) {
+    try {
+      return state.doc(id).snapshots().map((snapshot) {
+        if (snapshot.exists) {
+          return snapshot.data();
+        }
+        return null;
+      });
+    } catch (e) {
+      return Stream.value(null);
+    }
+  }
+  
+  // リスト監視
+  Stream<List<Model>> watchModelList() {
+    try {
+      return state
+          .orderBy(FirebaseFeatureKey.createdAt, descending: true)
+          .snapshots()
+          .map((snapshot) {
+            return snapshot.docs.map((doc) => doc.data()).toList();
+          });
+    } catch (e) {
+      return Stream.value([]);
+    }
+  }
+}
+```
+
+### Controller パターン
+
+#### 1. アクション系Controller（基本）
+```dart
+@riverpod
+class FeatureController extends _$FeatureController {
+  @override
+  AsyncValue build() {
+    return const AsyncData(null);
+  }
+  
+  Future<void> createFeature(Model model) async {
+    state = const AsyncLoading();
+    try {
+      await ref.read(featureRepoProvider.notifier).createFeature(model);
+      state = const AsyncData(null);
+    } catch (error, stackTrace) {
+      state = AsyncError(error, stackTrace);
+    }
+  }
+}
+```
+
+#### 2. Watch系Controller（監視専用）
+```dart
+// 単一データ監視
+@riverpod
+Stream<Model?> watchFeatureController(
+  Ref ref, {
+  required String id,
+}) {
+  return ref
+      .read(featureRepoProvider.notifier)
+      .watchFeature(id: id);
 }
 
-コードスタイル: ESLint + Prettier で統一
-ドキュメント: 関数やコンポーネントには JSDoc コメントを必ず追加
-規約: ハードコードは絶対にしないでください。環境変数や設定ファイルを使用して、柔軟に対応できるようにします。
+// リスト監視
+@riverpod
+Stream<List<Model>> watchFeatureListController(Ref ref) {
+  return ref
+      .read(featureRepoProvider.notifier)
+      .watchFeatureList();
+}
+```
+
+### 関数管理規約
+
+#### 1. 関数の分類と配置ルール
+
+##### A. Widgetを返す関数
+- **配置場所**: Widgetファイル内（screenファイル、partファイル、componentファイル）
+- **命名規則**: `_buildXxxWidget()` など
+- **特徴**: Widget型を返す、UI構築に使用
+
+##### B. Widgetを返さない関数（ユーティリティ関数）
+- **配置場所**: `/lib/src/functions/` フォルダ内
+- **命名規則**: 機能に応じたクラス名（例：DateFormatter, StringHelper等）
+- **特徴**: 計算、変換、フォーマット等の処理を行う
+
+#### 2. functionsフォルダの構成
+```
+/lib/src/functions/
+├── date_formatter.dart    # 日付フォーマット関数
+├── string_helper.dart     # 文字列処理関数
+├── number_formatter.dart  # 数値フォーマット関数
+└── validation_helper.dart # バリデーション関数
+```
+
+#### 3. 実装例
+
+##### A. 日付フォーマット関数
+```dart
+// /lib/src/functions/date_formatter.dart
+class DateFormatter {
+  /// DateTime を 'yyyy/MM/dd HH:mm' 形式にフォーマット
+  static String formatDate(DateTime date) {
+    return '${date.year}${StringKey.dateSeparator}${date.month.toString().padLeft(NumberKey.datePadWidth, StringKey.zeroPadding)}${StringKey.dateSeparator}${date.day.toString().padLeft(NumberKey.datePadWidth, StringKey.zeroPadding)}${StringKey.dateTimeSeparator}${date.hour.toString().padLeft(NumberKey.datePadWidth, StringKey.zeroPadding)}${StringKey.timeSeparator}${date.minute.toString().padLeft(NumberKey.datePadWidth, StringKey.zeroPadding)}';
+  }
+}
+```
+
+### データモデル規約
+
+#### 1. Freezed 使用
+```dart
+@freezed
+class Model with _$Model {
+  const factory Model({
+    required String id,
+    required String email,
+    // nullable フィールドには ? を付ける
+    Timestamp? loginAt,
+    // Timestamp は直接使用（TimestampConverter付き）
+    @TimestampConverter() required Timestamp createdAt,
+  }) = _Model;
+
+  factory Model.fromJson(Map<String, dynamic> json) =>
+      _$ModelFromJson(json);
+}
+```
+
+### 命名規則
+
+#### 1. Provider 命名
+- **Repository**: `[feature]RepoProvider`
+- **Controller**: `[feature]ControllerProvider`
+- **List Controller**: `watch[Feature]ListControllerProvider`
+
+#### 2. メソッド命名
+- **監視系**: `watch[Feature]` (Stream を返す)
+- **取得系**: `get[Feature]` (Future を返す)
+- **更新系**: `update[Feature]` (Future<void> を返す)
+- **作成系**: `create[Feature]` (Future<void> を返す)
+- **削除系**: `delete[Feature]` (Future<void> を返す)
+
+### Enum 定義
+```dart
+enum EnumName {
+  value1(NumberKey.value1, StringKey.value1),
+  value2(NumberKey.value2, StringKey.value2);
+
+  const EnumName(this.value, this.label);
+
+  final int value;
+  final String label;
+
+  static EnumName fromValue(int value) {
+    return EnumName.values.firstWhere(
+      (type) => type.value == value,
+      orElse: () => EnumName.value1,
+    );
+  }
+}
+```
+
+### ルーティング規約（go_router_builder）
+
+#### 1. 基本構成
+
+##### A. ファイル構成
+```
+/lib/src/config/routing/
+├── app_router.dart              # メインルーターファイル
+├── app_router.g.dart           # 自動生成ファイル
+├── router_utils.dart           # ルートパス定数
+└── go_router_refresh_stream.dart # リフレッシュ制御
+```
+
+#### 2. app_router.dart の基本構造
+
+##### A. 基本テンプレート
+```dart
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:riverpod_annotation/riverpod_annotation.dart';
+import 'package:go_router/go_router.dart';
+import 'package:project_name/src/config/routing/go_router_refresh_stream.dart';
+import 'package:project_name/src/config/routing/router_utils.dart';
+
+part 'app_router.g.dart';
+
+final GlobalKey<NavigatorState> _rootNavigatorKey = GlobalKey<NavigatorState>();
+
+@Riverpod(keepAlive: true)
+GoRouter appRouter(Ref ref) {
+  return GoRouter(
+    navigatorKey: _rootNavigatorKey,
+    initialLocation: AppRoute.dashboard,
+    refreshListenable: GoRouterRefreshStream(
+      ref.read(authRepoProvider.notifier).authStateChange(),
+    ),
+    redirect: (context, state) {
+      // 認証状態に基づくリダイレクト処理
+      return null;
+    },
+    routes: $appRoutes,
+  );
+}
+```
+
+##### B. TypedGoRoute の基本パターン
+```dart
+// 単一画面（パラメータなし）
+@TypedGoRoute<AuthRoute>(path: AppRoute.auth)
+class AuthRoute extends GoRouteData {
+  @override
+  Widget build(BuildContext context, GoRouterState state) {
+    return const AuthScreen();
+  }
+}
+
+// パラメータ付きルート
+@TypedGoRoute<UserDetailRoute>(path: AppRoute.userDetail)
+class UserDetailRoute extends GoRouteData {
+  final String userId;
+  
+  const UserDetailRoute({required this.userId});
+
+  @override
+  Widget build(BuildContext context, GoRouterState state) {
+    return UserDetailScreen(userId: userId);
+  }
+}
+
+// ネストしたルート（子ルート）
+@TypedGoRoute<DashboardRoute>(
+  path: AppRoute.dashboard,
+  routes: <TypedGoRoute>[
+    TypedGoRoute<UserListRoute>(path: AppRoute.userListSub),
+    TypedGoRoute<SettingsRoute>(path: AppRoute.settingsSub),
+  ],
+)
+class DashboardRoute extends GoRouteData {
+  @override
+  Widget build(BuildContext context, GoRouterState state) {
+    return const DashboardScreen();
+  }
+}
+```
+
+#### 3. router_utils.dart の構成規約
+
+##### A. ルートパス定数の定義規則
+```dart
+class AppRoute {
+  // 認証関連
+  static const String auth = '/auth';
+  static const String login = '/login';
+  
+  // メイン機能
+  static const String dashboard = '/dashboard';
+  static const String profile = '/profile';
+  
+  // パラメータ付きルート（:parameter形式）
+  static const String userDetail = '/user/:userId';
+  static const String editUser = '/user/:userId/edit';
+  
+  // 子ルート（相対パス）
+  static const String userListSub = '/users';      // /dashboard/users
+  static const String settingsSub = '/settings';   // /dashboard/settings
+  
+  // 深い階層のルート
+  static const String adminUserManagement = '/admin/users';
+  static const String adminSystemSettings = '/admin/settings';
+}
+```
+
+#### 4. 認証・権限管理
+
+##### A. リダイレクト処理
+```dart
+@Riverpod(keepAlive: true)
+GoRouter appRouter(Ref ref) {
+  return GoRouter(
+    // ...
+    redirect: (context, state) {
+      final isAuthenticated = ref.read(authRepoProvider).isAuthenticated;
+      final isAuthRoute = state.matchedLocation == AppRoute.auth;
+      
+      // 未認証でログイン画面以外にアクセス
+      if (!isAuthenticated && !isAuthRoute) {
+        return AppRoute.auth;
+      }
+      
+      // 認証済みでログイン画面にアクセス
+      if (isAuthenticated && isAuthRoute) {
+        return AppRoute.dashboard;
+      }
+      
+      return null; // リダイレクトなし
+    },
+  );
+}
+```
+
+## スタイル・定数管理
+
+### スタイル管理規約
+
+#### 1. スタイル定義クラス構成
+
+##### A. ColorStyleクラス（色定義）
+```dart
+class ColorStyle {
+  // 基本色（実際に使用されている色のみ）
+  static const white = Color.fromARGB(255, 255, 255, 255);
+  static const gray = Color.fromARGB(255, 121, 121, 121);
+  static const green = Color.fromARGB(255, 84, 185, 75);
+  static const red = Color.fromARGB(255, 235, 92, 92);
+  static const blue = Color.fromARGB(255, 50, 75, 184);
+  static const orange = Color.fromARGB(255, 255, 153, 0);
+
+  // [PROJECT_SPECIFIC] プロジェクト固有のUI色
+  static const primaryBackground = Color(0xFFE2E2E2);
+  static const primaryText = Color(0xFF1B2128);
+  static const tableHeader = Color(0xFFF5F5F5);
+  static const shadow = Color.fromARGB(13, 0, 0, 0);
+}
+```
+
+##### B. CustomFontSizeクラス（フォントサイズ定義）
+```dart
+class CustomFontSize {
+  static const double s10 = 10.0;
+  static const double s12 = 12.0;
+  static const double s14 = 14.0;
+  static const double s16 = 16.0;
+  static const double s20 = 20.0;
+  static const double s24 = 24.0;
+}
+```
+
+##### C. HeightMarginクラス（縦余白定義）
+```dart
+class HeightMargin {
+  static const SizedBox h4 = SizedBox(height: 4.0);
+  static const SizedBox h8 = SizedBox(height: 8.0);
+  static const SizedBox h16 = SizedBox(height: 16.0);
+  static const SizedBox h24 = SizedBox(height: 24.0);
+  static const SizedBox h40 = SizedBox(height: 40.0);
+}
+```
+
+##### D. WidthMarginクラス（横余白定義）
+```dart
+class WidthMargin {
+  static const SizedBox w4 = SizedBox(width: 4.0);
+  static const SizedBox w8 = SizedBox(width: 8.0);
+  static const SizedBox w16 = SizedBox(width: 16.0);
+  static const SizedBox w24 = SizedBox(width: 24.0);
+  static const SizedBox w40 = SizedBox(width: 40.0);
+}
+```
+
+#### 2. スタイル使用規則（必須）
+
+##### A. 禁止事項
+- **直接数値指定禁止**: フォントサイズ、余白は直接数値で指定禁止
+- **直接のColor指定禁止**: `Colors.blue` や `Color(0xFF...)` は使用禁止
+- **const SizedBox直接作成禁止**: `const SizedBox(height: 8)` は使用禁止
+
+##### B. 必須使用規則
+- **フォントサイズ**: `CustomFontSize.s[サイズ]` で指定
+- **縦余白**: `HeightMargin.h[サイズ]` で指定
+- **横余白**: `WidthMargin.w[サイズ]` で指定
+- **色**: `ColorStyle.[colorName]` で指定
+
+#### 3. 実装例
+
+##### ❌ 悪い例（禁止）
+```dart
+Container(
+  margin: const EdgeInsets.only(top: 8, bottom: 16), // 直接数値指定禁止
+  color: Colors.blue, // 直接色指定禁止
+  child: Text(
+    'テキスト',
+    style: TextStyle(fontSize: 14, color: Color(0xFF1B2128)), // 直接指定禁止
+  ),
+)
+```
+
+##### ✅ 良い例（必須）
+```dart
+Container(
+  color: ColorStyle.blue,
+  child: Text(
+    'テキスト',
+    style: TextStyle(
+      fontSize: CustomFontSize.s14,
+      color: ColorStyle.primaryText,
+    ),
+  ),
+)
+
+Column(
+  children: [
+    Text('タイトル', style: TextStyle(fontSize: CustomFontSize.s24)),
+    HeightMargin.h24, // 縦余白はHeightMarginから
+    Text('内容', style: TextStyle(fontSize: CustomFontSize.s16)),
+  ],
+)
+```
+
+### 定数管理規約（ハードコーディング禁止）
+
+#### 1. 基本原則（絶対遵守）
+
+##### A. 完全禁止事項
+- **文字列のハードコーディング**: 'こんにちは' や "Hello" などの直接文字列記述は禁止
+- **数値のハードコーディング**: 10, 20, 0.5 などの直接数値記述は禁止  
+- **マジックナンバー**: 意味不明な数値の直接使用は禁止
+
+##### B. 必須使用ルール
+- **全ての文字列**: `StringKey.[定数名]` から取得必須
+- **全ての数値**: `NumberKey.[定数名]` から取得必須
+- **UI関連の数値**: サイズ、余白、透明度など全て定数化必須
+
+#### 2. 定数定義クラス構成
+
+##### A. StringKey（文字列定数）
+```dart
+class StringKey {
+  // [PROJECT_SPECIFIC] 画面タイトル
+  static const String mainListTitle = 'メイン一覧';
+  static const String settingsTitle = '設定';
+
+  // 共通UI文字列
+  static const String tableHeaderId = 'ID';
+  static const String tableHeaderName = '名前';
+  static const String tableHeaderEmail = 'メールアドレス';
+  static const String tableHeaderStatus = 'ステータス';
+
+  // メッセージ
+  static const String errorMessage = 'エラーが発生しました: ';
+  static const String loadingMessage = '読み込み中...';
+  static const String noDataMessage = 'データがありません';
+
+  // 文字列処理用
+  static const String ellipsis = '...';
+  static const String dateSeparator = '/';
+  static const String timeSeparator = ':';
+  static const String dateTimeSeparator = ' ';
+  static const String zeroPadding = '0';
+}
+```
+
+##### B. NumberKey（数値定数）
+```dart
+class NumberKey {
+  // UI関連の数値
+  static const int idDisplayLimit = 10;
+  static const int nameDisplayLimit = 20;
+  static const double blurRadius = 10.0;
+  static const double borderRadius = 8.0;
+  static const double backgroundAlpha = 0.1;
+  
+  // padding用の数値
+  static const double paddingSmall = 4.0;
+  static const double paddingMedium = 8.0;
+  static const double paddingLarge = 12.0;
+
+  // 日付フォーマット用
+  static const int datePadWidth = 2;
+  
+  // ローディング用
+  static const double loadingScale = 1.2;
+}
+```
+
+#### 3. 実装例
+
+##### ❌ 禁止例（ハードコーディング）
+```dart
+// 文字列のハードコーディング（禁止）
+Text('メイン一覧')
+Container(child: Text('エラーが発生しました'))
+DataColumn(label: Text('ID'))
+
+// 数値のハードコーディング（禁止）
+BorderRadius.circular(8)
+Container(padding: EdgeInsets.all(12))
+name.length > 10 ? '${name.substring(0, 10)}...' : name
+```
+
+##### ✅ 必須例（定数使用）
+```dart
+// 文字列定数の使用（必須）
+Text(StringKey.mainListTitle)
+Container(child: Text('${StringKey.errorMessage}$error'))
+DataColumn(label: Text(StringKey.tableHeaderId))
+
+// 数値定数の使用（必須）
+BorderRadius.circular(NumberKey.borderRadius)
+Container(padding: EdgeInsets.all(NumberKey.paddingLarge))
+name.length > NumberKey.nameDisplayLimit 
+    ? '${name.substring(0, NumberKey.nameDisplayLimit)}${StringKey.ellipsis}' 
+    : name
+```
+
+#### 4. 定数追加ルール
+
+##### A. 新規定数追加の判断基準
+- **使用頻度**: 2箇所以上で使用される場合は必ず追加
+- **意味性**: 数値や文字列に意味がある場合は必ず追加
+- **保守性**: 将来的に変更の可能性がある場合は必ず追加
+
+##### B. 命名規則
+- **StringKey**: 用途_内容形式（例：`tableHeaderId`, `errorMessage`）
+- **NumberKey**: 用途名（例：`borderRadius`, `paddingLarge`）
+
+#### 5. 特殊ケース（例外的に直接記述が許可される場合）
+- **Flutter Framework固有の値**: `Offset(0, 1)` の 0, 1
+- **数学的定数**: `pi`, `e` などの数学定数
+- **型変換やnullチェック**: `toString()`, `!`, `?` 演算子での数値
+
+---
+
+## プロジェクト固有設定
+
+> **注意**: この章の内容は `[PROJECT_SPECIFIC]` として、プロジェクトごとに置き換えが必要です
+
+### バージョン管理
+
+#### バージョン更新手順
+1. **ホスティングにデプロイする前に必ず実行**
+   - `lib/version.dart` のバージョンを更新
+   - 形式: `メジャー.マイナー.パッチ` (例: 1.0.1, 1.1.0, 2.0.0)
+   
+2. **バージョン番号の決め方**
+   - **パッチ**: バグ修正、軽微な変更 (1.0.0 → 1.0.1)
+   - **マイナー**: 新機能追加、互換性のある変更 (1.0.0 → 1.1.0)
+   - **メジャー**: 大幅な変更、互換性のない変更 (1.0.0 → 2.0.0)
+
+3. **現在のバージョン**: 1.0.0 `[PROJECT_SPECIFIC]`
+
+#### 更新履歴 `[PROJECT_SPECIFIC]`
+- v1.0.0 (2025-01-05): 初回リリース
+  - AI英会話機能（WebRTC音声通信）
+  - Whisper APIによる音声文字起こし機能
+  - テキストベースのRealtime API通信
+
+### データベース構造 `[PROJECT_SPECIFIC]`
+
+#### 主要テーブル一覧
+
+#### 1. organizationAdmins (組織管理者)
+| カラム名 | 型 | 説明 |
+|---------|-----|-----|
+| organizationAdminId | string | 組織管理者ID (PK) |
+| email | string | メールアドレス |
+| organizationUserName | string | 組織管理者名 |
+| phoneNumber | string | 電話番号 |
+| address | string | 住所 |
+| organizationType | int | 1: 教育委員会, 2: 学校 |
+| organizationId | string | 教育委員会ID or 学校ID |
+| updatedAt | timestamp | 更新日時 |
+| createdAt | timestamp | 作成日時 |
+| loginAt | timestamp? | 最終ログイン日時 |
+| status | int | 1: アクティブ, 2: 退会, 3: 強制退会 |
+
+##### サブコレクション: accountIssueLogs (アカウント発行ログ)
+| カラム名 | 型 | 説明 |
+|---------|-----|-----|
+| accountIssueLogId | string | アカウント発行ログID (PK) |
+| organizationAdminId | string | 組織管理者ID |
+| issuedAccountCount | int | アカウント発行数 |
+| updatedAt | timestamp | 更新日時 |
+| createdAt | timestamp | 作成日時 |
+
+#### 2. boardsOfEducation (教育委員会)
+| カラム名 | 型 | 説明 |
+|---------|-----|-----|
+| boardOfEducationId | string | 教育委員会ID (PK) |
+| email | string | メールアドレス |
+| organizationUserId | string | 組織管理者ID |
+| boardOfEducationName | string | 教育委員会名 |
+| phoneNumber | string | 電話番号 |
+| address | string | 住所 |
+| updatedAt | timestamp | 更新日時 |
+| createdAt | timestamp | 作成日時 |
+
+#### 3. schools (学校)
+| カラム名 | 型 | 説明 |
+|---------|-----|-----|
+| schoolId | string | 学校ID (PK) |
+| email | string | メールアドレス |
+| organizationUserId | string | 組織管理者ID |
+| schoolName | string | 学校名 |
+| phoneNumber | string | 電話番号 |
+| accountCount | int | アカウント数 |
+| address | string | 住所 |
+| boardOfEducationId | string | 教育委員会ID |
+| updatedAt | timestamp | 更新日時 |
+| createdAt | timestamp | 作成日時 |
+| loginAt | timestamp? | 最終ログイン日時 |
+
+#### 4. teachers (先生)
+| カラム名 | 型 | 説明 |
+|---------|-----|-----|
+| teacherId | string | 先生ID (PK) |
+| email | string | メールアドレス |
+| lastName | string | 姓 |
+| firstName | string | 名 |
+| schoolId | string | 学校ID |
+| latestDeviceId | string | 最新デバイスID |
+| updatedAt | timestamp | 更新日時 |
+| createdAt | timestamp | 作成日時 |
+| loginAt | timestamp? | 最終ログイン日時 |
+| status | int | 1: アクティブ, 2: 退会, 3: 強制退会 |
+
+#### 5. speakingTests (スピーキングテスト)
+| カラム名 | 型 | 説明 |
+|---------|-----|-----|
+| speakingTestId | string | スピーキングテストID (PK) |
+| teacherId | string | 先生ID |
+| studentName | string | 生徒名 |
+| aiCharacterId | int | 選択されたAIキャラのID |
+| grammarIds | int | 選択された文法IDリスト |
+| wordIds | int | 選択された単語IDリスト |
+| themeIds | int | 選択されたテーマIDリスト |
+| customThemeText | int | 自由入力のテーマ |
+| conversationCount | int | 会話の回数 |
+| aiSpeakingSpeed | int | AIの話すスピード |
+| pronunciationStrictness | int | 発音判定の厳しさ |
+| score | int | スコア |
+| goodPoint | string | 素晴らしかった点 |
+| advice | string | アドバイス |
+| createdAt | timestamp | 作成日時 |
+| updatedAt | timestamp | 更新日時 |
+
+#### 6. conversationLogs (会話ログ)
+| カラム名 | 型 | 説明 |
+|---------|-----|-----|
+| conversationLogId | string | 会話ログID (PK) |
+| speakingTestId | string | スピーキングテストID |
+| speaker | int | 1: 生徒, 2: AI |
+| text | string | 発話テキスト |
+| advice | string | アドバイス |
+| timestamp | timestamp | 発話時刻 |
+| createdAt | timestamp | 作成日時 |
+
+#### 7. adminUsers (管理者)
+| カラム名 | 型 | 説明 |
+|---------|-----|-----|
+| adminUserId | string | 管理者ID (PK) |
+| email | string | メールアドレス |
+| adminUserName | string | 管理者名 |
+| updatedAt | timestamp | 更新日時 |
+| createdAt | timestamp | 作成日時 |
+| loginAt | timestamp? | 最終ログイン日時 |
+
+### テーブル関係図
+- **organizationAdmins** は organizationType によって **boardsOfEducation** または **schools** を管理
+- **boardsOfEducation** は複数の **schools** を管轄
+- **schools** は複数の **teachers** を所属させる
+- **teachers** は複数の **speakingTests** を実施
+- **speakingTests** は複数の **conversationLogs** を保持
+
+### Firebase Key 管理 `[PROJECT_SPECIFIC]`
+
+#### Firebase Key クラス命名規則
+- **形式**: `Firebase[TableName]Key`
+- **例**: 
+  - `FirebaseAdminUsersKey`
+  - `FirebaseOrganizationAdminsKey`
+  - `FirebaseAccountIssueLogsKey`
+
+#### Firebase Key 構成
+```dart
+class Firebase[TableName]Key {
+  // コレクション名
+  static const String [tableName]Collection = '[tableName]';
+  
+  // フィールド名
+  static const String [fieldName] = '[fieldName]';
+}
+```
+
+## 注意事項
+
+### 他プロジェクト適用時のチェックリスト
+
+以下の項目を新しいプロジェクトに合わせて置き換えてください：
+
+- [ ] **バージョン管理**: 現在のバージョン番号、更新履歴
+- [ ] **Firebase Key管理**: プロジェクト固有のコレクション名、フィールド名
+- [ ] **ColorStyle**: プロジェクト固有のUI色（primaryBackground, primaryText等）
+- [ ] **StringKey**: プロジェクト固有の画面タイトル、メッセージ
+- [ ] **import文**: パッケージ名を`package:[your_project_name]/...`に置き換え
+
+### 重要な原則
+
+1. **一貫性の維持**: すべてのコードで同じパターンを使用
+2. **型安全性**: Freezedとriverpodによる型安全なアーキテクチャ
+3. **保守性**: 定数化とWidget分割による保守しやすいコード
+4. **テスタビリティ**: 適切な分離による単体テストしやすい設計
+5. **可読性**: 命名規則と構造化による可読性の高いコード
+
+このドキュメントに従って開発することで、品質の高い保守可能なFlutterアプリケーションを構築できます。
 <!-- ここまで -->
