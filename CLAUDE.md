@@ -23,9 +23,8 @@ PRESIDENT → boss1 → workers → boss1 → PRESIDENT
 <!-- ここまで -->
 
 
-
 ## serenaを導入する
-serenaが紐づいてなければ下記コマンドで導入する。
+serenaが現在のプロジェクトに紐づいてなければ下記コマンドで現在のプロジェクトに導入する。
 claude mcp add serena -- uvx --from git+https://github.com/oraios/serena serena-mcp-server --context ide-assistant --project $(pwd)
 
 
